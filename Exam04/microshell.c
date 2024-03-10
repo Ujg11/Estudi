@@ -62,7 +62,6 @@ int executor(char **argv, int i, int wcont, char **env)
 	pid = fork();
 	if (pid == 0) //En el fill
 	{
-
 		if (is_pipe && dup2(fd[OUT], STDOUT_FILENO) == -1)
 			return (print_error("error: fatal\n"));
 		if (close(fd[IN]) == -1 || close(fd[OUT]) == -1)
@@ -91,13 +90,14 @@ int main(int argc, char *argv[], char **env)
 	{
 		while (argv[i] && argv[i + 1])
 		{
+			i += w_cont  + 1;
 			w_cont = 0;
 			while (argv[i] && strcmp(argv[i], "|") != 0 && strcmp(argv[i], ";") != 0)
 				w_cont++;
 			if (strcmp(argv[i], "cd"))
 				ret_val = cd(argv, i + 1, w_cont);
 			else if (w_cont > 0)
-				ret_val = executor(argv, i + 1, w_cont, env);
+				ret_val = executor(argv, i, w_cont, env);
 		}
 	}
 	return (ret_val);
