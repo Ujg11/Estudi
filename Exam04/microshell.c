@@ -6,99 +6,80 @@
 /*   By: ojimenez <ojimenez@student.42barcelona.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/08 13:31:53 by ojimenez          #+#    #+#             */
-/*   Updated: 2024/03/08 13:31:53 by ojimenez         ###   ########.fr       */
+/*   Updated: 2024/03/11 17:58:49 by ojimenez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "microshell.h"
+# include <unistd.h>
+# include <string.h>
+# include <sys/wait.h>
 
-int print_error(char *str)
+int error(char *str)
 {
 	int i = 0;
 
 	while (str[i])
 	{
-		write(2, &str[i], 1);
+		write (2, &str[i], 1);
 		i++;
 	}
 	return (1);
 }
 
-int cd(char **argv, int i, int w_cont)
+int cd(char **argv, int wcont)
 {
-	if (w_cont != 2)
-		return (print_error("error: cd: bad arguments\n"));
-	else if (!chdir(argv[i]))
-	{
-		print_error("error: cd: cannot change directory to ");
-		print_error(argv[i]);
-		return (print_error("\n"));
-	}
+	if (wcont != 2)
+		return (error("error: cd: bad arguments\n"));
+	else if (chdir(argv[1]) == -1)
+		return (error("error: cd: cannot change directory to "), error(argv[1]), error("\n"));
 	return (0);
 }
 
-int executor(char **argv, int i, int wcont, char **env)
+int executor(char **argv, char **env, int wcont)
 {
 	int fd[2];
-	int ret_val;
-	int is_pipe = 0;
+	int status;
 	int pid;
-	int j = 0;
-	char *arguments[wcont + 1];
+	int is_pipe = 0;
 
-	while (j < wcont)
-	{
-		arguments[j] = argv[i + j];
-		j++;
-	}
-    arguments[wcont] = NULL;
-	if (argv[i] && strcmp(argv[i], "|") == 0)
+	if (argv[wcont] && strcmp(argv[wcont], "|") == 0)
 		is_pipe = 1;
-	if (is_pipe)
-	{
-		if (pipe(fd) == -1)
-			return (print_error("error: fatal\n"));
-	}
+	if (is_pipe && pipe(fd) == -1)
+		return(error("error: fatal\n"));
 	pid = fork();
-	if (pid == 0) //En el fill
+	if (pid == 0)
 	{
-		if (is_pipe && dup2(fd[OUT], STDOUT_FILENO) == -1)
-			return (print_error("error: fatal\n"));
-		if (close(fd[IN]) == -1 || close(fd[OUT]) == -1)
-			return (print_error("error: fatal\n"));
-		execve(arguments[0], arguments, env);
-		print_error("error: cannot execute ");
-		print_error(arguments[0]);
-		return (print_error("\n"));
+		argv[wcont] = 0;
+		if (is_pipe && (dup2(fd[1], 1) == -1 || close(fd[0]) == -1 || close(fd[1] == -1)))
+			return (error("error: fatal\n"));
+		execve(*argv, argv, env);
+		error("error: cannot execute ");
+		error(*argv);
+		return (error("\n"));
 	}
-	else // En el pare
-	{
-		waitpid(pid, &ret_val, 0);
-		if (is_pipe && (dup2(fd[IN], STDIN_FILENO) == -1 || close(fd[IN] == -1) || close(fd[OUT]) == -1))
-			return (print_error("error: fatal\n"));
-		return (WIFEXITED(ret_val) && WEXITSTATUS(ret_val));
-	}
+	waitpid(pid, &status, 0);
+	if (is_pipe && (dup2(fd[0], 0) == -1 || close(fd[0]) == -1 || close(fd[1]) == -1))
+		return (error("error: fatal"));
+	return (WIFEXITED(status) && WEXITSTATUS(status));
 }
 
-int main(int argc, char *argv[], char **env)
+int	main(int argc, char *argv[], char **env)
 {
-	int	i = 0;
-	int w_cont = 0;
-	int ret_val = 0;
-	
-	if (argc > 1)
+	int	ret_val = 0;
+	(void)argc;
+	int wcont = 0;
+
+	while (*argv && *(argv + 1))
 	{
-		while (argv[i] && argv[i + 1])
-		{
-			i += w_cont  + 1;
-			w_cont = 0;
-			while (argv[i] && strcmp(argv[i], "|") != 0 && strcmp(argv[i], ";") != 0)
-				w_cont++;
-			if (strcmp(argv[i], "cd"))
-				ret_val = cd(argv, i + 1, w_cont);
-			else if (w_cont > 0)
-				ret_val = executor(argv, i, w_cont, env);
-		}
+		argv++;
+		wcont = 0;
+		while (argv[wcont] && strcmp(argv[wcont], "|") != 0 && strcmp(argv[wcont], ";") != 0)
+			wcont++;
+		if (strcmp(*argv, "cd") == 0)
+			ret_val = cd(argv, wcont);
+		else if (wcont > 0)
+			ret_val = executor(argv, env, wcont);
+		argv += wcont;
 	}
 	return (ret_val);
 }
