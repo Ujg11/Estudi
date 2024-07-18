@@ -36,6 +36,11 @@ Warlock::Warlock(std::string name, std::string title): name(name), title(title)
 Warlock::~Warlock()
 {
 	std::cout << this->name << ": My job here is done!" << std::endl;
+	for (std::map<std::string, ASpell *>::iterator it = spellsCollection.begin(); it != spellsCollection.end(); ++it)
+	{
+		delete it->second;
+	}
+	spellsCollection.clear();
 }
 
 const std::string &Warlock::getName() const
