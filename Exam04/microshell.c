@@ -12,7 +12,7 @@
 
 # include <unistd.h>
 # include <string.h>
-# include <sys/wait.h>
+//# include <sys/wait.h>
 
 int error(char *str)
 {
@@ -50,7 +50,7 @@ int executor(char **argv, char **env, int wcont)
 	if (pid == 0)
 	{
 		argv[wcont] = 0;
-		if (is_pipe && (dup2(fd[1], 1) == -1 || close(fd[0]) == -1 || close(fd[1] == -1)))
+		if (is_pipe && (dup2(fd[1], 1) == -1 || close(fd[0]) == -1 || close(fd[1]) == -1))
 			return (error("error: fatal\n"));
 		execve(*argv, argv, env);
 		error("error: cannot execute ");
