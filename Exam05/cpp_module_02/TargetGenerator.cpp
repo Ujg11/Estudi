@@ -50,9 +50,12 @@ void TargetGenerator::learnTargetType(ATarget *target)
 
 void TargetGenerator::forgetTargetType(std::string const &targetName)
 {
-	if (targets.find(targetName) != targets.end())
+	std::map<std::string, ATarget *>::iterator it = targets.find(targetName);
+
+	if (it != targets.end())
 	{
-		targets.erase(targetName);
+		delete it->second;
+		targets.erase(it);
 	}
 }
 

@@ -40,4 +40,3 @@ class Warlock
 		void forgetSpell(std::string spellName);
 		void launchSpell(std::string spellName, ATarget const &target);
 };
-

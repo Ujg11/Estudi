@@ -51,14 +51,12 @@ void SpellBook::learnSpell(ASpell *spell)
 
 void SpellBook::forgetSpell(std::string const &spellName)
 {
-	for (std::map<std::string, ASpell *>::iterator it = spells.begin(); it != spells.end(); ++it)
+	std::map<std::string, ASpell *>::iterator it = spells.find(spellName);
+
+	if (it != spells.end())
 	{
-		if (it->first == spellName)
-		{
-			delete it->second;
-			spells.erase(it);
-			return ;
-		}
+		delete it->second;
+		spells.erase(it);
 	}
 }
 
